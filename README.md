@@ -1,8 +1,12 @@
-# confluent-spring-healthcare-coverage-demo
+# confluent-healthcare-coverage-demo
 
 ![healthcare topology diagram](healthcare-topology.png)
 
-Generates a stream of JSON-formatted hypothetical illnesses to the `ailments` topic, e.g.
+The application generates a stream of JSON-formatted hypothetical illnesses to the `ailments` topic:
+
+![ailment service](ailment-service.png)
+
+Here's some example output:
 
     [root@cp01 ~]# kafka-console-consumer --bootstrap-server cp01.woolford.io:9092 --topic ailment
     {"id":1,"ailment":"heel spurs"}
@@ -18,17 +22,18 @@ Generates a stream of JSON-formatted hypothetical illnesses to the `ailments` to
 
 The `id` is a unique identifier for the patient. The patients and ailments are generated from data that's staged in MySQL. The tables are automatically created, using Flyway, when the app is launched.
 
-# todo:
+Once the ailment data is flowing in Kafka, we create a stream in ksqlDB:
 
-    http DELETE http://cp01.woolford.io:8083/connectors/mysql-cdc-healthcare
+    CREATE STREAM AILMENT (
+      id STRING,
+      ailment VARCHAR
+    ) WITH (
+      kafka_topic='ailment',
+      value_format='JSON',
+      KEY='id'
+    );
 
-    kafka-topics --bootstrap-server cp01.woolford.io:9092 --delete --topic deepthought.healthcare.patient
-
-    drop database healthcare;
-    create database healthcare;
-
-    http DELETE cp01.woolford.io:8081/subjects/deepthought.healthcare.patient-key
-    http DELETE cp01.woolford.io:8081/subjects/deepthought.healthcare.patient-value
+The application creates tables in a MySQL database. The [MySQL Debezium connector](https://debezium.io/documentation/reference/1.2/connectors/mysql.html) is used to capture the changes from the MySQL binlogs and write them to a Kafka topic. Here's the config:
 
     http PUT http://cp01.woolford.io:8083/connectors/mysql-cdc-healthcare/config  <<< '
     {
@@ -58,9 +63,21 @@ The `id` is a unique identifier for the patient. The patients and ailments are g
         "transforms.HoistField.field": "id"
     }'
 
-    // create stream and table
+Once the patient data is in Kafka, we create a table in ksqlDB:
 
-    select * from ailment inner join patient on ailment.id = patient.id emit changes;
+    CREATE TABLE PATIENT (
+      id STRING,
+      firstname VARCHAR,
+      lastname VARCHAR,
+      enroll_start BIGINT,
+      enroll_end BIGINT
+    ) WITH (
+      kafka_topic='deepthought.healthcare.patient',
+      value_format='JSON',
+      KEY='id'
+    );
+
+We can then join the stream and table:
 
     select
       ailment.id as id,
@@ -77,3 +94,4 @@ The `id` is a unique identifier for the patient. The patients and ailments are g
         else false
       end as covered
     from ailment inner join patient on ailment.id = patient.id emit changes;
+
