@@ -1,6 +1,6 @@
 # confluent-healthcare-coverage-demo
 
-![healthcare topology diagram](healthcare-topology.png)
+![ksqlDB/Connect topology diagram](ksql-connect-topology.png)
 
 The application generates a stream of JSON-formatted hypothetical illnesses to the `ailments` topic:
 
