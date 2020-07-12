@@ -95,3 +95,6 @@ We can then join the stream and table:
       end as covered
     from ailment inner join patient on ailment.id = patient.id emit changes;
 
+Here's a video walk-through:
+
+[![joining streams and tables in ksqlDB](https://img.youtube.com/vi/NeEtadHmIDc/0.jpg)](https://www.youtube.com/watch?v=NeEtadHmIDc)
