@@ -15,7 +15,7 @@ import java.sql.SQLException;
 @Configuration
 public class DataConfig {
 
-    @Value("${spring.datasource.url}")
+    @Value("${spring.datasource.url}&useLegacyDatetimeCode=false&serverTimezone=America/Denver")
     private String url;
 
     @Value("${spring.datasource.username}")
