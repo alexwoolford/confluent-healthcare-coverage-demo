@@ -25,12 +25,11 @@ The `id` is a unique identifier for the patient. The patients and ailments are g
 Once the ailment data is flowing in Kafka, we create a stream in ksqlDB:
 
     CREATE STREAM AILMENT (
-      id STRING,
+      id STRING KEY,
       ailment VARCHAR
     ) WITH (
       kafka_topic='ailment',
-      value_format='JSON',
-      KEY='id'
+      value_format='JSON'
     );
 
 The application creates tables in a MySQL database. The [MySQL Debezium connector](https://debezium.io/documentation/reference/1.2/connectors/mysql.html) is used to capture the changes from the MySQL binlogs and write them to a Kafka topic. Here's the config:
@@ -66,15 +65,14 @@ The application creates tables in a MySQL database. The [MySQL Debezium connecto
 Once the patient data is in Kafka, we create a table in ksqlDB:
 
     CREATE TABLE PATIENT (
-      id STRING,
+      id STRING PRIMARY KEY,
       firstname VARCHAR,
       lastname VARCHAR,
       enroll_start BIGINT,
       enroll_end BIGINT
     ) WITH (
       kafka_topic='deepthought.healthcare.patient',
-      value_format='JSON',
-      KEY='id'
+      value_format='JSON'
     );
 
 We can then join the stream and table:
